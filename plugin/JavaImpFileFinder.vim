@@ -1,16 +1,14 @@
 command! -nargs=+ JIFF              call <SID>JavaImpFileFinder(<f-args>)
 
 let s:pluginHome = expand("<sfile>:p:h:h")
-let s:reloadScript = 0
-
-if !s:reloadScript
-	execute "py3file " . substitute(s:pluginHome, "\\", "/", "g") . "/pythonx/jiff.py"
-endif
+let s:loadScript = 1
 
 function! <SID>JavaImpFileFinder(...) 
 	if has('python3')
-		if s:reloadScript
+		if s:loadScript
 			execute "py3file " . substitute(s:pluginHome, "\\", "/", "g") . "/pythonx/jiff.py"
+
+			let s:loadScript = 0
 		endif
 
 		execute "python3 jiff_find_file()"
@@ -21,8 +19,10 @@ endfunction
 
 function! JavaImpClassFinder(name) 
 	if has('python3')
-		if s:reloadScript
+		if s:loadScrpit
 			execute "py3file " . substitute(s:pluginHome, "\\", "/", "g") . "/pythonx/jiff.py"
+			
+			let s:loadScript = 0
 		endif
 
 		execute "python3 jiff_find_java_class(\"" . a:name . "\")"

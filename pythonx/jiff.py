@@ -6,7 +6,13 @@ import vim
 def jiff_show_error_message(msg):
     try:
         vim.command("echohl ErrorMsg")
-        vim.command("echo \"{0}\"".format(msg))
+
+        if isinstance(msg, list):
+            for m in msg:
+                vim.command("echo \"{0}\"".format(m))
+        else:
+            vim.command("echo \"{0}\"".format(msg))
+
         vim.command("echohl None")
     except vim.error:
         pass
@@ -23,7 +29,6 @@ def jiff_find_class(path, name):
 
     if result.returncode == 0:
         for line in result.stdout.split("\n"):
-            #TODO - handle lines starting with [fd error]:
             values = line.split(":")
 
             if len(values) > 1:
@@ -103,6 +108,17 @@ def jiff_find_java_class(name):
     else:
         jiff_show_more_message("No results found for {0}".format(name))
 
+def jiff_read_fd(result):
+    dest = []
+
+    for line in result.split("\n"):
+        line = line.strip()
+
+        if line:
+            dest.append(line)
+
+    return dest
+
 def jiff_fd(pattern, paths):
     args = ["fd", pattern]
     args.extend(paths)
@@ -110,22 +126,19 @@ def jiff_fd(pattern, paths):
     result = subprocess.run(args, capture_output=True, text=True)
     selected = None
 
-    if result.returncode == 0:
-        files = []
+    errors = jiff_read_fd(result.stderr)
+    files = jiff_read_fd(result.stdout)
 
-        for line in result.stdout.split("\n"):
-            if line.strip():
-                files.append(line)
+    if files:
+        selected = files[0]
 
-        if files:
-            selected = files[0]
-
-            if len(files) > 1:
-                selected = jiff_select_option(pattern, files)
-        else:
-            jiff_show_more_message("No results found for pattern '{0}'".format(pattern))
+        if len(files) > 1:
+            selected = jiff_select_option(pattern, files)
     else:
-        jiff_show_error_message("Failed to execute fd command")
+        if not errors:
+            jiff_show_more_message("No results found for pattern '{0}'".format(pattern))
+        else:
+            jiff_show_error_message(errors)
 
     return selected 
 
