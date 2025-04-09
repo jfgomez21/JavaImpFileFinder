@@ -75,7 +75,7 @@ def jiff_decompile_class(dest, jarfile, name):
     if os.path.isfile(javapath):
         return javapath
 
-    args = ["java", "-jar", "{0}/vineflower-1.11.1-slim.jar".format(vim.eval("s:pluginHome")), "--log-level=error , ""--only={0}".format(name), jarfile, os.path.join(dest, os.path.basename(jarfile_no_extension))]
+    args = ["java", "-jar", "{0}/java/vineflower-1.11.1-slim.jar".format(vim.eval("s:pluginHome")), "--log-level=error", "--only={0}".format(name), jarfile, os.path.join(dest, os.path.basename(jarfile_no_extension))]
 
     result = subprocess.run(args)
 
@@ -90,9 +90,9 @@ def jiff_show_more_message(message):
     vim.eval("input(\"{0}\")".format(message))
     vim.command("echohl None")
 
-
 def jiff_find_java_class(name):
-    options = jiff_find_class(".javaImp/cache", name)
+    filepath = vim.eval("g:JavaImpDataDir")
+    options = jiff_find_class("{0}/cache".format(filepath), name)
 
     if options:
         selected = options[0]
@@ -101,7 +101,7 @@ def jiff_find_java_class(name):
             selected = jiff_select_option(name, options)
 
         if selected:
-            filename = jiff_decompile_class(".javaImp/jif", selected["filename"], selected["classname"])
+            filename = jiff_decompile_class("{0}/jiff".format(filepath), selected["filename"], selected["classname"])
 
             if filename:
                 vim.command("tabe {0}".format(filename))
@@ -148,8 +148,6 @@ def jiff_find_file():
 
     if values:
         if len(values) == 1:
-            paths.append(".")
-
             for path in vim.eval("g:JavaImpPaths").split(","):
                 if os.path.isdir(path):
                     paths.append(path)

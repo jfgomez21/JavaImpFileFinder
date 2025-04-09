@@ -19,7 +19,7 @@ endfunction
 
 function! JavaImpClassFinder(name) 
 	if has('python3')
-		if s:loadScrpit
+		if s:loadScript
 			execute "py3file " . substitute(s:pluginHome, "\\", "/", "g") . "/pythonx/jiff.py"
 			
 			let s:loadScript = 0
