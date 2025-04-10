@@ -42,7 +42,7 @@ def jiff_find_class(path, name):
 
     return entries
 
-def jiff_select_option(name, options):
+def jiff_select_option(name, options, data=None):
     prompt = "Multiple matches exist for {0}. Select one -".format(name)
 
     for index, option in enumerate(options):
@@ -63,6 +63,9 @@ def jiff_select_option(name, options):
 
         if index >= 0 and index < len(options):
             selection = options[index]
+
+            if data:
+                selection = data[index]
 
     return selection
 
@@ -98,7 +101,12 @@ def jiff_find_java_class(name):
         selected = options[0]
 
         if len(options) > 1:
-            selected = jiff_select_option(name, options)
+            choices = []
+
+            for option in options:
+                choices.append(os.path.basename(option["filename"]))
+
+            selected = jiff_select_option(name, choices, options)
 
         if selected:
             filename = jiff_decompile_class("{0}/jiff".format(filepath), selected["filename"], selected["classname"])
