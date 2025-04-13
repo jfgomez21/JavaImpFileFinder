@@ -161,10 +161,10 @@ def jiff_find_file():
                     paths.append(path)
         else:		
             paths.extend(values[1:])
+
+        filename = jiff_fd(values[0], paths)
+        
+        if filename:
+            vim.command("tabe {0}".format(filename))
     else:
         jiff_show_error_message("No arguments specified")
-
-    filename = jiff_fd(values[0], paths)
-
-    if filename:
-        vim.command("tabe {0}".format(filename))
