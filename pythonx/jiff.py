@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import pathlib
 import vim
 
 def jiff_show_error_message(msg):
@@ -138,6 +139,9 @@ def jiff_fd(pattern, paths):
     files = jiff_read_fd(result.stdout)
 
     if files:
+        for index in range(len(files)):
+            files[index] = pathlib.Path(files[index]).as_posix()
+
         selected = files[0]
 
         if len(files) > 1:
