@@ -154,6 +154,30 @@ def jiff_fd(pattern, paths):
 
     return selected 
 
+def jiff_parse_tabs():
+    vim.command("redir @a")
+    vim.command("silent tabs")
+    vim.command("redir END")
+    lines = vim.eval("@a").splitlines()
+
+    results = []
+
+    for line in lines:
+        if line and not line.startswith("Tab"):
+            results.append(pathlib.Path(line.replace(">   ", "").replace("  + ", "").strip()).as_posix())
+
+    return results
+
+def jiff_find_tab(tabs, filename):
+    for index, value in enumerate(tabs):
+        if value == filename:
+            return index
+
+    return -1
+            
+def jiff_go_to_tab(tabs, index):
+    vim.command("tabnext {0}".format(index))
+
 def jiff_find_file():
     values = vim.eval("a:000")
     paths = []
@@ -165,10 +189,16 @@ def jiff_find_file():
                     paths.append(path)
         else:		
             paths.extend(values[1:])
-
-        filename = jiff_fd(values[0], paths)
-        
-        if filename:
-            vim.command("tabe {0}".format(filename))
     else:
         jiff_show_error_message("No arguments specified")
+
+    filename = jiff_fd(values[0], paths)
+
+    if filename:
+        tabs = jiff_parse_tabs()
+        index = jiff_find_tab(tabs, filename)
+
+        if index > 0:
+            jiff_go_to_tab(tabs, index + 1)
+        else:
+            vim.command("tabe {0}".format(filename))
