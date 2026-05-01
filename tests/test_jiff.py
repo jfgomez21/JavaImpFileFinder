@@ -13,7 +13,7 @@ class TestJiff(TestCase):
         vim.reset()
 
     @patch('subprocess.run')
-    def test_jiff_find_file(self, mock_run):
+    def test_jiff_find_java_file(self, mock_run):
         self.fs.create_file("src/main/java/com/example/MyClass.java")
 
         vim.set_eval("g:JavaImpPaths", "src/main/java") 
@@ -22,12 +22,12 @@ class TestJiff(TestCase):
         mock_run.return_value.stdout = "src/main/java/com/example/MyClass.java"
         mock_run.return_value.returncode = 0
 
-        jiff.jiff_find_file()
+        jiff.jiff_find_java_file()
 
         self.assertEqual("src/main/java/com/example/MyClass.java", vim.properties["file_name"]) 
 
     @patch('subprocess.run')
-    def test_jiff_find_file_with_path_argument(self, mock_run):
+    def test_jiff_find_java_file_with_path_argument(self, mock_run):
         self.fs.create_file("src/main/java/com/example/MyClass.java")
 
         vim.set_eval("g:JavaImpPaths", "src/test/java") 
@@ -36,12 +36,12 @@ class TestJiff(TestCase):
         mock_run.return_value.stdout = "src/main/java/com/example/MyClass.java"
         mock_run.return_value.returncode = 0
 
-        jiff.jiff_find_file()
+        jiff.jiff_find_java_file()
 
         self.assertEqual("src/main/java/com/example/MyClass.java", vim.properties["file_name"]) 
 
     @patch('subprocess.run')
-    def test_jiff_find_file_with_no_arguments(self, mock_run):
+    def test_jiff_find_java_file_with_no_arguments(self, mock_run):
         self.fs.create_file("src/main/java/com/example/MyClass.java")
 
         vim.set_eval("g:JavaImpPaths", "src/main/java") 
@@ -50,14 +50,14 @@ class TestJiff(TestCase):
         mock_run.return_value.stdout = "src/main/java/com/example/MyClass.java"
         mock_run.return_value.returncode = 0
 
-        jiff.jiff_find_file()
+        jiff.jiff_find_java_file()
 
         self.assertEqual("", vim.properties["file_name"]) 
         self.assertEqual(1, len(vim.properties["error_messages"]))
         self.assertEqual("No arguments specified", vim.properties["error_messages"][0])
 
     @patch('subprocess.run')
-    def test_jiff_find_file_with_no_results(self, mock_run):
+    def test_jiff_find_java_file_with_no_results(self, mock_run):
         self.fs.create_file("src/main/java/com/example/MyClass.java")
 
         vim.set_eval("g:JavaImpPaths", "src/main/java") 
@@ -66,14 +66,14 @@ class TestJiff(TestCase):
         mock_run.return_value.stdout = ""
         mock_run.return_value.returncode = 0
 
-        jiff.jiff_find_file()
+        jiff.jiff_find_java_file()
 
         self.assertEqual("", vim.properties["file_name"])
         self.assertEqual("No results found for pattern 'MyService'", vim.properties["input_messages"][0])
         self.assertEqual(1, len(vim.properties["input_messages"]))
 
     @patch('subprocess.run')
-    def test_jiff_find_file_with_error_messages(self, mock_run):
+    def test_jiff_find_java_file_with_error_messages(self, mock_run):
         self.fs.create_file("src/main/java/com/example/MyClass.java")
 
         vim.set_eval("g:JavaImpPaths", "src/main/java,src/test/java,abc") 
@@ -89,7 +89,7 @@ class TestJiff(TestCase):
         mock_run.return_value.stderr = "\n".join(error_messages)
         mock_run.return_value.returncode = 0
 
-        jiff.jiff_find_file()
+        jiff.jiff_find_java_file()
 
         self.assertEqual("", vim.properties["file_name"])
 
@@ -97,7 +97,7 @@ class TestJiff(TestCase):
             self.assertEqual(error_messages[index], vim.properties["error_messages"][index])
 
     @patch('subprocess.run')
-    def test_jiff_find_file_with_multiple_options(self, mock_run):
+    def test_jiff_find_java_file_with_multiple_options(self, mock_run):
         self.fs.create_file("src/main/java/com/example/MyClass.java")
         self.fs.create_file("src/main/java/com/example/service/MyService.java")
         self.fs.create_file("src/test/java/com/example/service/TestMyService.java")
@@ -115,7 +115,7 @@ class TestJiff(TestCase):
         mock_run.return_value.stdout = "\n".join(stdout_results)
         mock_run.return_value.returncode = 0
 
-        jiff.jiff_find_file()
+        jiff.jiff_find_java_file()
 
         expected_input_messages = ["Multiple matches exist for My. Select one -"]
 
@@ -234,4 +234,34 @@ class TestJiff(TestCase):
             self.assertEqual(expected_error_messages[index], vim.properties["error_messages"][index])
 
         self.assertEqual(len(expected_error_messages), len(vim.properties["error_messages"]))
+ 
+    @patch('subprocess.run')
+    def test_jiff_find_regular_file(self, mock_run):
+        self.fs.create_file("src/main/java/com/example/data.txt")
+
+        vim.set_eval("a:000", ["data"])
+
+        mock_run.return_value.stdout = "src/main/java/com/example/data.txt"
+        mock_run.return_value.returncode = 0
+
+        jiff.jiff_find_regular_file()
+
+        self.assertEqual("src/main/java/com/example/data.txt", vim.properties["file_name"]) 
+
+    @patch('subprocess.run')
+    def test_jiff_find_regular_file_insert(self, mock_run):
+        self.fs.create_file("src/main/java/com/example/MyClass.java")
+
+        vim.set_eval("a:000", ["MyClass"])
+        vim.current.buffer.append("")
+        vim.current.window.cursor = (1, 0)
+
+        mock_run.return_value.stdout = "src/main/java/com/example/MyClass.java"
+        mock_run.return_value.returncode = 0
+
+        jiff.jiff_find_regular_file_insert()
+
+        expected_line = "src/main/java/com/example/MyClass.java"
+        self.assertEqual(expected_line, vim.current.buffer[0])
+        self.assertEqual((1, len("src/main/java/com/example/MyClass.java")), vim.current.window.cursor)
 

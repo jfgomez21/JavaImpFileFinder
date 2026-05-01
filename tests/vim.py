@@ -1,22 +1,28 @@
 class BufferList(list):
-	def __init__(self, *args):
-		super().__init__(*args)
-	
-	def append(self, element, index = None):
-		if index is None:
-			if isinstance(element, list):
-				for item in element:
-					super().append(item)
-			else:
-				super().append(element)
-		else:
-			if isinstance(element, list):
-				self[index:index] = element
-			else:
-				super().insert(index, element)
-	
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def append(self, element, index=None):
+        if index is None:
+            if isinstance(element, list):
+                for item in element:
+                    super().append(item)
+            else:
+                super().append(element)
+        else:
+            if isinstance(element, list):
+                self[index:index] = element
+            else:
+                super().insert(index, element)
+
+class Window:
+    def __init__(self):
+        self.cursor = (1, 0)
+
 class Buffer:
-	buffer = BufferList()
+    def __init__(self):
+        self.buffer = BufferList()
+        self.window = Window()
 
 class error(BaseException):
     pass
@@ -62,9 +68,9 @@ def set_input_return_value(code):
     properties["input_return_value"] = code
 
 def reset():
+    current = Buffer()
     properties.clear()
     properties["file_name"] = ""
     properties["error_messages"] = []
     properties["input_messages"] = []
     properties["input_return_value"] = "0"
-

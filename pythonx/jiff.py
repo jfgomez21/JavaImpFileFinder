@@ -129,7 +129,14 @@ def jiff_read_fd(result):
     return dest
 
 def jiff_fd(pattern, paths):
-    args = ["fd", pattern]
+    args = ["fd"]
+
+    for path in vim.eval("g:JavaImpFileFinderExcludeDirs").split(","):
+        if os.path.isdir(path):
+            args.append("--exclude")
+            args.append(path)
+
+    args.append(pattern)
     args.extend(paths)
 
     result = subprocess.run(args, capture_output=True, text=True)
@@ -178,27 +185,60 @@ def jiff_find_tab(tabs, filename):
 def jiff_go_to_tab(tabs, index):
     vim.command("tabnext {0}".format(index))
 
-def jiff_find_file():
+def jiff_display_file(filename):
+    tabs = jiff_parse_tabs()
+    index = jiff_find_tab(tabs, filename)
+
+    if index > 0:
+        jiff_go_to_tab(tabs, index + 1)
+    else:
+        vim.command("tabe {0}".format(filename))
+
+def jiff_find_file(search_file_paths=[]):
     values = vim.eval("a:000")
     paths = []
 
-    if values:
-        if len(values) == 1:
-            for path in vim.eval("g:JavaImpPaths").split(","):
-                if os.path.isdir(path):
-                    paths.append(path)
-        else:		
-            paths.extend(values[1:])
-    else:
+    if not values:
         jiff_show_error_message("No arguments specified")
 
-    filename = jiff_fd(values[0], paths)
+        return None
+
+    if len(values) == 1:
+        paths.extend(search_file_paths)
+    else:		
+        paths.extend(values[1:])
+
+    return jiff_fd(values[0], paths)
+
+def jiff_find_java_file():
+    paths = []
+
+    for path in vim.eval("g:JavaImpPaths").split(","):
+        if os.path.isdir(path):
+            paths.append(path)
+
+    filename = jiff_find_file(paths)
 
     if filename:
-        tabs = jiff_parse_tabs()
-        index = jiff_find_tab(tabs, filename)
+        jiff_display_file(filename)
 
-        if index > 0:
-            jiff_go_to_tab(tabs, index + 1)
-        else:
-            vim.command("tabe {0}".format(filename))
+    return filename
+
+def jiff_find_regular_file():
+    filename = jiff_find_file()
+
+    if filename:
+        jiff_display_file(filename)
+
+    return filename
+
+def jiff_find_regular_file_insert():
+    filename = jiff_find_file()
+
+    if filename:
+        row, col = vim.current.window.cursor
+        line = vim.current.buffer[row - 1]
+        new_line = line[:col] + filename + line[col:]
+
+        vim.current.buffer[row - 1] = new_line
+        vim.current.window.cursor = (row, col + len(filename))
